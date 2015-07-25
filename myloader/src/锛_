@@ -1,0 +1,43 @@
+#include <elf.h>
+#include <stdlib.h>
+#include <stdio.h>
+#include "trap.h"
+#include "/home/alexandrea/NEMU/include/memory.h"
+
+void loader(){
+	Elf32_Phdr *elf=(void *)0;
+	Elf32_Phdr *temp=elf;
+	int nr_hdr_entry=0;
+	int i=0;
+	int j=0;
+	int k=0;
+	int v,o,fs,ms;
+
+	while(temp!=NULL){
+		temp+=sizeof(temp[0]);
+		nr_hdr_entry++;
+	}
+
+	for(i=0;i<nr_hdr_entry;i++){
+		if(elf[i].p_ type==PT_LOAD){
+			v=elf[i].p_vaddr;
+			o=elf[i].p_offset;
+			fs=elf[i].p_filesz;
+			ms=elf[i].p_memsz;
+			for(j=0;j<fs;j++){
+				swaddr_write(v,1,swaddr_read(o,1));
+				v++;
+				o++;
+ 			} 
+			for(k=0;k <ms-fs;k++){
+				swaddr_write(v+fs,1,0);
+				v++;
+ 			}
+			printf("%d\n",i);
+ 		} 
+ 	}
+
+	((void(*)(void)) elf) ();
+
+	HIT_GOOD_TRAP;
+}
