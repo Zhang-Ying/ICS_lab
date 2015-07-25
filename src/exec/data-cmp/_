@@ -1,0 +1,66 @@
+#include "exec/helper.h"
+#include "exec/template-start.h"
+#include "cpu/modrm.h"
+#include "~/NEMU/testcase/trap.h"
+make_helper(concat(cmp_rm2i_,SUFFIX)){
+	ModR_M m;
+	DATA_TYPE imm1=instr_fetch(eip+1+1,1);
+	DATA_TYPE imm2;
+	DATA_TYPE result;
+	m.val=instr_fetch(eip+1,1);
+	if(m.mod==3){
+		imm2=REG(m.reg);
+		result=imm1-imm2;
+		nemu_assert(result==0);
+		if((imm1<0&&imm2>0&&result>0)||(imm1>0&&imm2<0&&result<0))
+			cpu.eflags.OF=1;
+		else
+			cpu.eflags.OF=0;
+		if(result<0)
+			cpu.eflags.SF=1;
+		else
+			cpu.eflags.SF=0;
+		if(result==0)
+			cpu.eflags.ZF=1;
+		else
+			cpu.eflags.ZF=0;
+	   cpu.eflags.PF=!((result&1)^(result&2)^(result&4)^(result&8)^(result&16)^(result&32)^(result&64)^(result&128)^(result&256)^(result&512)^(result&1024)^(result&2048)^(result&4096)^(result&8192)^(result&16384)^(result&32768));
+       if(result<0)
+		   cpu.eflags.CF=1;
+	   else 
+		   cpu.eflags.CF=0;
+	   print_asm("cmp" str(SUFFIX) " $0x%x,%%%s", imm1,REG_NAME(m.R_M));
+	   return 1+1+1;
+	}
+	else{
+		swaddr_t addr;
+		read_ModR_M(eip+1,&addr);
+		imm2=swaddr_read(addr,DATA_BYTE);
+		result=imm1-imm2;
+		if((imm1<0&&imm2>0&&result>0)||(imm1>0&&imm2<0&&result<0))
+		    cpu.eflags.OF=1;
+		else
+			cpu.eflags.OF=0;
+	    if(result<0)
+			cpu.eflags.SF=1;
+	    else
+			cpu.eflags.SF=0;
+	    if(result==0)
+		    cpu.eflags.ZF=1;
+		else
+			cpu.eflags.ZF=0;
+		cpu.eflags.PF=!((result&1)^(result&2)^(result&4)^(result&8)^(result&16)^(result&32)^(result&64)^(result&128)^(result&256)^( result&512)^(result&1024)^(result&2048)^(result&4096)^(result&8192)^(result&16384)^(result&32768));
+		 if(result<0)
+			  cpu.eflags.CF=1;
+		 else
+			  cpu.eflags.CF=0;
+		 print_asm("cmp"str(SUFFIX) " $0x%x,%s",imm1,ModR_M_asm);
+		 return 1+DATA_BYTE;
+	} 
+}
+#include "exec/template-end.h"
+
+        
+
+		
+

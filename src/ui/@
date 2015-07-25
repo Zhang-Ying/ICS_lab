@@ -1,0 +1,116 @@
+#include "ui/breakpoint.h"
+#include<stdlib.h>
+#include "nemu.h"
+#define NR_BP 32
+void breakpoint_continue(int n);
+void breakpoint_started(int n);
+void main_loop();
+static BP bp_pool[NR_BP];
+static BP *head=NULL, *free_=NULL,*s=NULL;
+void init_bp_pool() {
+	int i;
+	for(i = 0;  i <  NR_BP - 1; i ++) {
+		bp_pool[i].NO = i;
+		bp_pool[i].next = &bp_pool[i + 1];
+		bp_pool[i].tag=false;
+ 	}
+	bp_pool[i].next = NULL;
+	head = NULL;
+	free_ = bp_pool;
+}
+BP* new_bp(){
+	BP* newbr;
+	BP* current=free_;
+	while(current!=NULL){
+		if(current->tag==false){
+			newbr=current;
+			goto L1;
+		}
+	}
+	if(current==NULL)
+		assert(0);
+L1:	return newbr;
+}
+void free_bp(BP *bp){
+	int t;
+	BP* current;
+	current=free_;
+	t=bp->NO;
+	bp->tag=false;
+   	while((current->NO>=t||current->next->NO<=t||current->next!=NULL)&&current!=NULL)
+		current=current->next;
+    if(current->next==NULL)
+		current->next=bp;
+	 else{
+		bp->next=current->next->next;
+		current->next=bp;
+	}  
+}
+void breakpoint_start(int n){
+	char m;
+	int t;
+	int* p;
+	char* q;
+	BP* current,*newb;
+	s=NULL;
+	p=(int*)n;
+	q=(char*)n;
+    current=head;
+	assert(p!=NULL);
+	m=*q;
+	t=*p;
+	newb=new_bp();
+    newb->instr=m;
+	newb->address=n;
+	t=t&((0xCC<<24)+0xFFFFFF);
+	current=newb;
+	s=current;
+	breakpoint_continue(n);
+}
+void breakpoint_continue(int n){
+	char ins;
+	int t;
+	t=*(int*)n;
+	ins=s->instr;
+	t=t&((ins<<24)+0xFFFFFF);
+	printf("set breakpoint successfully!\n");
+	s->tag=true;
+	main_loop();
+	breakpoint_started(n);
+}
+void breakpoint_started(int n){
+	int t;
+	t=*(int*)n;
+    t=t&((0xCC<<24)+0xFFFFFF);
+    breakpoint_continue(n);
+}
+void breakpoint_print(){
+	BP* current=free_;
+	int Num;
+	int n;
+	while(current!=NULL){
+		if(current->tag==true){
+			Num=current->NO;
+			n=current->address;
+			printf("%d\t",Num+1);
+			printf("breakpoint\tkeep\t");
+			printf("%x\t\n",n);
+		}
+		current=current->next;
+	}
+}
+void breakpoint_del(){
+	BP* current=free_;
+	while(current!=NULL){
+		if(current->tag==true){
+			current->tag=false;
+			free_bp(current);
+		}
+		current=free_->next;
+	} 
+	return ;
+}
+
+
+
+/* TODO: Implement the function of breakpoint */
